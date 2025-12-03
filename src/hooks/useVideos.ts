@@ -56,13 +56,25 @@ export function useVideos() {
         { signal }
       );
 
+      console.log('Fetched video events:', events.length);
+      events.forEach((e, i) => {
+        const dTag = e.tags.find(([name]) => name === 'd')?.[1];
+        const imetaTag = e.tags.find(([name]) => name === 'imeta');
+        console.log(`Event ${i}: d=${dTag}, imeta parts=${imetaTag?.length || 0}, created=${e.created_at}`);
+      });
+
       // Parse events into video data, filter out invalid ones
       const videos = events
         .map(parseVideoEvent)
         .filter((v): v is VideoData => v !== null);
 
-      // Sort by created_at descending (newest first)
-      videos.sort((a, b) => b.event.created_at - a.event.created_at);
+      console.log('Parsed videos:', videos.length);
+      videos.forEach((v, i) => {
+        console.log(`Video ${i}: url=${v.videoUrl}, thumb=${v.thumbnailUrl}`);
+      });
+
+      // Sort by created_at ascending (oldest first)
+      videos.sort((a, b) => a.event.created_at - b.event.created_at);
 
       return videos;
     },

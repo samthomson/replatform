@@ -10,17 +10,13 @@ import { Comment } from './Comment';
 interface CommentsSectionProps {
   root: NostrEvent | URL;
   title?: string;
-  emptyStateMessage?: string;
-  emptyStateSubtitle?: string;
   className?: string;
   limit?: number;
 }
 
-export function CommentsSection({ 
+export function CommentsSection({
   root,
   title = "Comments",
-  emptyStateMessage = "No comments yet",
-  emptyStateSubtitle = "Be the first to share your thoughts!",
   className,
   limit = 500,
 }: CommentsSectionProps) {
@@ -46,11 +42,6 @@ export function CommentsSection({
         <CardTitle className="flex items-center space-x-2">
           <MessageSquare className="h-5 w-5" />
           <span>{title}</span>
-          {!isLoading && (
-            <span className="text-sm font-normal text-muted-foreground">
-              ({comments.length})
-            </span>
-          )}
         </CardTitle>
       </CardHeader>
       <CardContent className="px-2 pb-6 pt-4 sm:p-6 sm:pt-0 space-y-6">
@@ -77,13 +68,7 @@ export function CommentsSection({
               </Card>
             ))}
           </div>
-        ) : comments.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">
-            <MessageSquare className="h-12 w-12 mx-auto mb-4 opacity-30" />
-            <p className="text-lg font-medium mb-2">{emptyStateMessage}</p>
-            <p className="text-sm">{emptyStateSubtitle}</p>
-          </div>
-        ) : (
+        ) : comments.length > 0 && (
           <div className="space-y-4">
             {comments.map((comment) => (
               <Comment

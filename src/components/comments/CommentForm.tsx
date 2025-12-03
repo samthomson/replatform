@@ -19,9 +19,9 @@ interface CommentFormProps {
 export function CommentForm({
   root,
   reply,
-  onSuccess, 
+  onSuccess,
   placeholder = "Write a comment...",
-  compact = false 
+  compact = false
 }: CommentFormProps) {
   const [content, setContent] = useState('');
   const { user } = useCurrentUser();
@@ -29,7 +29,7 @@ export function CommentForm({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!content.trim() || !user) return;
 
     postComment(
@@ -70,12 +70,9 @@ export function CommentForm({
             className={compact ? "min-h-[80px]" : "min-h-[100px]"}
             disabled={isPending}
           />
-          <div className="flex justify-between items-center">
-            <span className="text-sm text-muted-foreground">
-              {reply ? 'Replying to comment' : 'Adding to the discussion'}
-            </span>
-            <Button 
-              type="submit" 
+          <div className="flex justify-end">
+            <Button
+              type="submit"
               disabled={!content.trim() || isPending}
               size={compact ? "sm" : "default"}
             >

@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Share2, Check, ChevronLeft, ChevronRight } from 'lucide-react';
+import { X, Share2, Check, ChevronLeft, ChevronRight, Code } from 'lucide-react';
 import { Button } from './ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
 import { useToast } from '@/hooks/useToast';
 import { VideoActions } from './VideoActions';
 import { CommentsSection } from './comments/CommentsSection';
@@ -18,6 +19,7 @@ interface VideoLightboxProps {
 export function VideoLightbox({ video: videoData, videoIndex, totalVideos, onClose, onNavigate }: VideoLightboxProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [copied, setCopied] = useState(false);
+  const [showRawEvent, setShowRawEvent] = useState(false);
   const { toast } = useToast();
 
   // The event is already available from the video data
@@ -89,12 +91,12 @@ export function VideoLightbox({ video: videoData, videoIndex, totalVideos, onClo
 
   return createPortal(
     <div
-      className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center"
+      className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
       onClick={handleBackdropClick}
     >
-      <div className="bg-white dark:bg-neutral-900 w-full max-w-6xl max-h-[90vh] rounded-lg overflow-hidden flex flex-col lg:flex-row">
+      <div className="bg-white dark:bg-neutral-900 w-full max-w-6xl h-[90vh] rounded-lg overflow-hidden flex flex-col lg:flex-row">
         {/* Video Player */}
-        <div className="flex-1 bg-black relative min-h-[300px] lg:min-h-0">
+        <div className="flex-1 bg-black relative flex items-center justify-center min-h-0">
           <Button
             variant="ghost"
             size="icon"
@@ -136,7 +138,7 @@ export function VideoLightbox({ video: videoData, videoIndex, totalVideos, onClo
         </div>
 
         {/* Sidebar */}
-        <div className="w-full lg:w-96 bg-neutral-50 dark:bg-neutral-950 border-l border-neutral-200 dark:border-neutral-800 flex flex-col overflow-hidden max-h-[50vh] lg:max-h-none">
+        <div className="w-full lg:w-96 lg:flex-shrink-0 bg-neutral-50 dark:bg-neutral-950 border-t lg:border-t-0 lg:border-l border-neutral-200 dark:border-neutral-800 flex flex-col overflow-hidden">
           <div className="p-6 border-b border-neutral-200 dark:border-neutral-800">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-semibold text-neutral-900 dark:text-white">
@@ -158,21 +160,42 @@ export function VideoLightbox({ video: videoData, videoIndex, totalVideos, onClo
             </div>
 
             <VideoActions event={event} />
+
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowRawEvent(true)}
+              className="gap-2 mt-2 text-muted-foreground"
+            >
+              <Code className="w-4 h-4" />
+              View Raw Event
+            </Button>
           </div>
 
           <div className="flex-1 overflow-y-auto">
             <div className="p-6">
               <CommentsSection
                 root={event}
-                title="Comments"
-                emptyStateMessage="No comments yet"
-                emptyStateSubtitle="Be the first to comment"
                 className="bg-transparent border-0"
               />
             </div>
           </div>
         </div>
       </div>
+
+      {/* Raw Event Modal */}
+      <Dialog open={showRawEvent} onOpenChange={setShowRawEvent}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle>Raw Nostr Event</DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 overflow-auto">
+            <pre className="text-xs bg-neutral-100 dark:bg-neutral-800 p-4 rounded-lg overflow-auto">
+              {JSON.stringify(event, null, 2)}
+            </pre>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>,
     document.body
   );
