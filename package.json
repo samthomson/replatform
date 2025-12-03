@@ -45,6 +45,7 @@
     "@tanstack/react-query": "^5.56.2",
     "@unhead/addons": "^2.0.10",
     "@unhead/react": "^2.0.10",
+    "@videojs/http-streaming": "^3.17.2",
     "buffer": "^6.0.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -68,6 +69,7 @@
     "tailwind-merge": "^2.5.2",
     "tailwindcss-animate": "^1.0.7",
     "vaul": "^0.9.3",
+    "video.js": "^8.23.4",
     "zod": "^3.25.71"
   },
   "devDependencies": {

@@ -1,4 +1,7 @@
-import { useRef } from 'react';
+import { useRef, useEffect } from 'react';
+import videojs from 'video.js';
+import 'video.js/dist/video-js.css';
+import '@videojs/http-streaming';
 import { X, Share2, Check } from 'lucide-react';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from './ui/dialog';
 import { Button } from './ui/button';
@@ -9,6 +12,7 @@ import { useVideoEvent } from '@/hooks/useVideoEvent';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import type { VideoData } from '@/lib/videoData';
 import { useState } from 'react';
+import type Player from 'video.js/dist/types/player';
 
 interface VideoLightboxProps {
   video: VideoData;
@@ -17,10 +21,39 @@ interface VideoLightboxProps {
 }
 
 export function VideoLightbox({ video, videoIndex, onClose }: VideoLightboxProps) {
-  const videoRef = useRef<HTMLVideoElement>(null);
+  const videoRef = useRef<HTMLDivElement>(null);
+  const playerRef = useRef<Player | null>(null);
   const [copied, setCopied] = useState(false);
   const { toast } = useToast();
   const { data: event, isLoading } = useVideoEvent(video.hlsUrl, videoIndex);
+
+  useEffect(() => {
+    if (!playerRef.current && videoRef.current) {
+      const videoElement = document.createElement('video-js');
+      videoElement.classList.add('vjs-big-play-centered');
+      videoRef.current.appendChild(videoElement);
+
+      const player = playerRef.current = videojs(videoElement, {
+        autoplay: true,
+        controls: true,
+        responsive: true,
+        fluid: true,
+        sources: [{
+          src: video.hlsUrl,
+          type: 'application/x-mpegURL'
+        }],
+        poster: video.thumbnailBlossomUrl,
+      });
+    }
+
+    return () => {
+      const player = playerRef.current;
+      if (player && !player.isDisposed()) {
+        player.dispose();
+        playerRef.current = null;
+      }
+    };
+  }, [video.hlsUrl, video.thumbnailBlossomUrl]);
 
   const handleShare = async () => {
     const shareUrl = `${window.location.origin}?video=${videoIndex}`;
@@ -61,21 +94,13 @@ export function VideoLightbox({ video, videoIndex, onClose }: VideoLightboxProps
             <Button
               variant="ghost"
               size="icon"
-              className="absolute top-4 right-4 z-10 text-white hover:bg-white/20 rounded-full"
+              className="absolute top-4 right-4 z-50 text-white hover:bg-white/20 rounded-full"
               onClick={onClose}
             >
               <X className="w-6 h-6" />
             </Button>
 
-            <video
-              ref={videoRef}
-              src={video.hlsUrl}
-              controls
-              autoPlay
-              className="w-full h-full"
-              playsInline
-              poster={video.thumbnailBlossomUrl}
-            />
+            <div ref={videoRef} className="w-full h-full" />
           </div>
 
           {/* Info and Comments Section */}
