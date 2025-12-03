@@ -24,50 +24,56 @@ export function VideoLightbox({ video, videoIndex, onClose }: VideoLightboxProps
   const { data: event, isLoading } = useVideoEvent(video.hlsUrl, videoIndex);
 
   useEffect(() => {
-    const videoElement = videoRef.current;
-    if (!videoElement) {
-      console.log('No video element found');
-      return;
-    }
+    // Small delay to ensure Dialog portal has rendered
+    const timer = setTimeout(() => {
+      const videoElement = videoRef.current;
+      if (!videoElement) {
+        console.log('No video element found');
+        return;
+      }
 
-    console.log('Initializing HLS for:', video.hlsUrl);
+      console.log('Initializing HLS for:', video.hlsUrl);
 
-    if (Hls.isSupported()) {
-      console.log('HLS.js is supported, creating player...');
-      const hls = new Hls({
-        debug: true,
-      });
-
-      hls.loadSource(video.hlsUrl);
-      hls.attachMedia(videoElement);
-
-      hls.on(Hls.Events.MANIFEST_PARSED, () => {
-        console.log('HLS manifest parsed successfully');
-        videoElement.play().catch((e) => {
-          console.log('Autoplay prevented:', e);
+      if (Hls.isSupported()) {
+        console.log('HLS.js is supported, creating player...');
+        const hls = new Hls({
+          debug: true,
         });
-      });
 
-      hls.on(Hls.Events.ERROR, (event, data) => {
-        console.error('HLS Error:', data);
-      });
+        hls.loadSource(video.hlsUrl);
+        hls.attachMedia(videoElement);
 
-      return () => {
-        console.log('Destroying HLS instance');
-        hls.destroy();
-      };
-    } else if (videoElement.canPlayType('application/vnd.apple.mpegurl')) {
-      console.log('Using native HLS support (Safari)');
-      videoElement.src = video.hlsUrl;
-      videoElement.addEventListener('loadedmetadata', () => {
-        console.log('Video metadata loaded');
-        videoElement.play().catch((e) => {
-          console.log('Autoplay prevented:', e);
+        hls.on(Hls.Events.MANIFEST_PARSED, () => {
+          console.log('HLS manifest parsed successfully');
+          videoElement.play().catch((e) => {
+            console.log('Autoplay prevented:', e);
+          });
         });
-      });
-    } else {
-      console.error('HLS not supported in this browser');
-    }
+
+        hls.on(Hls.Events.ERROR, (event, data) => {
+          console.error('HLS Error:', data);
+        });
+
+        // Cleanup function
+        return () => {
+          console.log('Destroying HLS instance');
+          hls.destroy();
+        };
+      } else if (videoElement.canPlayType('application/vnd.apple.mpegurl')) {
+        console.log('Using native HLS support (Safari)');
+        videoElement.src = video.hlsUrl;
+        videoElement.addEventListener('loadedmetadata', () => {
+          console.log('Video metadata loaded');
+          videoElement.play().catch((e) => {
+            console.log('Autoplay prevented:', e);
+          });
+        });
+      } else {
+        console.error('HLS not supported in this browser');
+      }
+    }, 100);
+
+    return () => clearTimeout(timer);
   }, [video.hlsUrl]);
 
   const handleShare = async () => {
