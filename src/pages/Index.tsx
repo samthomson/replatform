@@ -4,6 +4,7 @@ import { useSearchParams } from 'react-router-dom';
 import { VideoGrid } from '@/components/VideoGrid';
 import { VideoLightbox } from '@/components/VideoLightbox';
 import { LoginArea } from '@/components/auth/LoginArea';
+import { SignupLink } from '@/components/auth/SignupLink';
 import { VIDEO_DATA } from '@/lib/videoData';
 
 const Index = () => {
@@ -70,7 +71,10 @@ const Index = () => {
       <footer className="border-t border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 py-6">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <p className="text-sm text-neutral-500 dark:text-neutral-400">
-            Vibed by the official unofficial official unofficial jacob buffington appreciation club
+            Vibed by the official unofficial official unofficial jacob buffington appreciation society.{' '}
+            <SignupLink className="text-neutral-900 dark:text-white underline hover:no-underline">
+              Join us
+            </SignupLink>
           </p>
         </div>
       </footer>
