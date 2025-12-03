@@ -39,7 +39,7 @@ export function VideoLightbox({ video, videoIndex, onClose }: VideoLightboxProps
       return;
     }
 
-    console.log('Initializing HLS for:', video.hlsUrl);
+    console.log('Initializing HLS for:', video);
 
     // Cleanup previous HLS instance
     if (hlsRef.current) {
@@ -61,11 +61,11 @@ export function VideoLightbox({ video, videoIndex, onClose }: VideoLightboxProps
       });
 
       hls.loadSource(video.hlsUrl);
-      hls.attachMedia(video);
+      hls.attachMedia(videoElement);
 
       hls.on(Hls.Events.MANIFEST_PARSED, () => {
         console.log('HLS manifest parsed successfully');
-        video.play().catch((e) => {
+        videoElement.play().catch((e) => {
           console.log('Autoplay blocked (click play button):', e);
         });
       });
@@ -84,12 +84,12 @@ export function VideoLightbox({ video, videoIndex, onClose }: VideoLightboxProps
         hls.destroy();
         hlsRef.current = null;
       };
-    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+    } else if (videoElement.canPlayType('application/vnd.apple.mpegurl')) {
       console.log('Using native HLS (Safari)');
-      video.src = video.hlsUrl;
-      video.addEventListener('loadedmetadata', () => {
+      videoElement.src = video.hlsUrl;
+      videoElement.addEventListener('loadedmetadata', () => {
         console.log('Metadata loaded');
-        video.play().catch((e) => {
+        videoElement.play().catch((e) => {
           console.log('Autoplay blocked:', e);
         });
       });
