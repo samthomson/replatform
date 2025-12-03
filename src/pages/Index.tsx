@@ -53,7 +53,7 @@ const Index = () => {
 
   useSeoMeta({
     title: 'Jacob Whatever - RIP PUBLICLY',
-    description: 'A memorial video gallery powered by Nostr',
+    description: 'Video gallery',
   });
 
   // Handle deep linking from URL params
@@ -78,44 +78,29 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900">
+    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950">
       {/* Header */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-purple-900/50 to-pink-900/50 backdrop-blur-sm border-b border-purple-500/20">
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0zNiAxOGMzLjMxNCAwIDYgMi42ODYgNiA2cy0yLjY4NiA2LTYgNi02LTIuNjg2LTYtNiAyLjY4Ni02IDYtNnoiIHN0cm9rZT0iI2ZmZiIgc3Ryb2tlLW9wYWNpdHk9Ii4xIi8+PC9nPjwvc3ZnPg==')] opacity-20"></div>
-        
-        <div className="container mx-auto px-4 py-12 relative z-10">
-          <div className="flex justify-between items-start mb-6">
-            <div className="flex-1">
-              <h1 className="text-6xl md:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-purple-200 to-pink-200 mb-4 tracking-tight leading-tight drop-shadow-2xl">
+      <header className="border-b border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-3xl font-bold text-neutral-900 dark:text-white tracking-tight">
                 JACOB WHATEVER
               </h1>
-              <p className="text-4xl md:text-6xl font-bold text-pink-400 tracking-wider drop-shadow-lg">
+              <p className="text-lg text-neutral-600 dark:text-neutral-400 mt-1">
                 RIP PUBLICLY
               </p>
             </div>
             
-            <div className="hidden md:block">
-              <LoginArea className="bg-white/10 backdrop-blur-md border border-white/20 rounded-lg px-4 py-2" />
-            </div>
-          </div>
-          
-          <div className="mt-8 flex items-center gap-4 text-purple-200/80">
-            <div className="h-px flex-1 bg-gradient-to-r from-transparent via-purple-400/50 to-transparent"></div>
-            <span className="text-sm uppercase tracking-widest">Memorial Gallery</span>
-            <div className="h-px flex-1 bg-gradient-to-r from-transparent via-purple-400/50 to-transparent"></div>
+            <LoginArea className="max-w-xs" />
           </div>
         </div>
-      </div>
-
-      {/* Mobile Login */}
-      <div className="md:hidden container mx-auto px-4 py-4">
-        <LoginArea className="w-full bg-white/10 backdrop-blur-md border border-white/20 rounded-lg px-4 py-2" />
-      </div>
+      </header>
 
       {/* Video Grid */}
-      <div className="container mx-auto px-4 py-12">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <VideoGrid videos={VIDEO_URLS} onVideoClick={handleVideoClick} />
-      </div>
+      </main>
 
       {/* Lightbox */}
       {selectedVideoIndex !== null && (
@@ -125,20 +110,6 @@ const Index = () => {
           onClose={handleCloseLightbox}
         />
       )}
-
-      {/* Footer */}
-      <footer className="border-t border-purple-500/20 bg-black/30 backdrop-blur-sm mt-20">
-        <div className="container mx-auto px-4 py-8">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-purple-200/60 text-sm">
-              Powered by Nostr • Decentralized Memorial Platform
-            </p>
-            <p className="text-purple-200/40 text-xs">
-              {VIDEO_URLS.length} videos in gallery
-            </p>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 };

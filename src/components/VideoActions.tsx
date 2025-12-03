@@ -125,14 +125,14 @@ export function VideoActions({ event }: VideoActionsProps) {
         onClick={handleReaction}
         disabled={isReacting || hasReacted}
         className={cn(
-          'border-purple-500/30 hover:bg-pink-500/20 hover:border-pink-500/50 transition-all text-white',
-          hasReacted && 'bg-pink-500/20 border-pink-500/50 text-pink-400'
+          'gap-2',
+          hasReacted && 'text-red-600 dark:text-red-500'
         )}
       >
         <Heart
-          className={cn('w-4 h-4 mr-2', hasReacted && 'fill-pink-400')}
+          className={cn('w-4 h-4', hasReacted && 'fill-current')}
         />
-        <span className="text-xs">
+        <span className="text-sm">
           {reactionsLoading ? '...' : reactions.length > 0 ? reactions.length : 'Like'}
         </span>
       </Button>
@@ -143,19 +143,19 @@ export function VideoActions({ event }: VideoActionsProps) {
         onClick={handleRepost}
         disabled={isReposting || hasReposted}
         className={cn(
-          'border-purple-500/30 hover:bg-purple-500/20 hover:border-purple-500/50 transition-all text-white',
-          hasReposted && 'bg-purple-500/20 border-purple-500/50 text-purple-400'
+          'gap-2',
+          hasReposted && 'text-green-600 dark:text-green-500'
         )}
       >
-        <Repeat2 className="w-4 h-4 mr-2" />
-        <span className="text-xs">
+        <Repeat2 className="w-4 h-4" />
+        <span className="text-sm">
           {repostsLoading ? '...' : reposts.length > 0 ? reposts.length : 'Repost'}
         </span>
       </Button>
 
-      <ZapButton event={event} variant="outline" size="sm" className="border-purple-500/30 hover:bg-yellow-500/20 hover:border-yellow-500/50 text-white">
-        <Zap className="w-4 h-4 mr-2" />
-        <span className="text-xs">Zap</span>
+      <ZapButton event={event} variant="outline" size="sm" className="gap-2">
+        <Zap className="w-4 h-4" />
+        <span className="text-sm">Zap</span>
       </ZapButton>
     </div>
   );

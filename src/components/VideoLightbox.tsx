@@ -17,19 +17,28 @@ interface VideoLightboxProps {
 
 export function VideoLightbox({ videoUrl, videoIndex, onClose }: VideoLightboxProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const hlsRef = useRef<Hls | null>(null);
   const [copied, setCopied] = useState(false);
   const { toast } = useToast();
-  const { event, isLoading } = useVideoEvent(videoUrl, videoIndex);
+  const { data: event, isLoading } = useVideoEvent(videoUrl, videoIndex);
 
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
+
+    // Clean up any existing HLS instance
+    if (hlsRef.current) {
+      hlsRef.current.destroy();
+      hlsRef.current = null;
+    }
 
     if (Hls.isSupported()) {
       const hls = new Hls({
         enableWorker: true,
         lowLatencyMode: false,
       });
+
+      hlsRef.current = hls;
 
       hls.loadSource(videoUrl);
       hls.attachMedia(video);
@@ -40,10 +49,30 @@ export function VideoLightbox({ videoUrl, videoIndex, onClose }: VideoLightboxPr
         });
       });
 
+      hls.on(Hls.Events.ERROR, (event, data) => {
+        console.error('HLS Error:', data);
+        if (data.fatal) {
+          switch (data.type) {
+            case Hls.ErrorTypes.NETWORK_ERROR:
+              console.error('Network error, trying to recover...');
+              hls.startLoad();
+              break;
+            case Hls.ErrorTypes.MEDIA_ERROR:
+              console.error('Media error, trying to recover...');
+              hls.recoverMediaError();
+              break;
+            default:
+              console.error('Fatal error, cannot recover');
+              break;
+          }
+        }
+      });
+
       return () => {
         hls.destroy();
       };
     } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+      // Native HLS support (Safari)
       video.src = videoUrl;
       video.addEventListener('loadedmetadata', () => {
         video.play().catch(() => {
@@ -55,11 +84,11 @@ export function VideoLightbox({ videoUrl, videoIndex, onClose }: VideoLightboxPr
 
   const handleShare = async () => {
     const shareUrl = `${window.location.origin}?video=${videoIndex}`;
-
+    
     if (navigator.share) {
       try {
         await navigator.share({
-          title: `Video #${videoIndex + 1} - Jacob Whatever RIP Gallery`,
+          title: `Video #${videoIndex + 1}`,
           url: shareUrl,
         });
       } catch (error) {
@@ -78,13 +107,14 @@ export function VideoLightbox({ videoUrl, videoIndex, onClose }: VideoLightboxPr
 
   return (
     <Dialog open={true} onOpenChange={onClose}>
-      <DialogContent className="max-w-6xl w-full p-0 bg-gray-900 border-purple-500/30 overflow-hidden">
+      <DialogContent className="max-w-6xl w-full p-0 bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800">
         <VisuallyHidden>
           <DialogTitle>Video #{videoIndex + 1}</DialogTitle>
           <DialogDescription>
             Video player with social features
           </DialogDescription>
         </VisuallyHidden>
+        
         <div className="flex flex-col lg:flex-row h-[90vh]">
           {/* Video Player Section */}
           <div className="flex-1 bg-black relative flex items-center justify-center">
@@ -100,48 +130,49 @@ export function VideoLightbox({ videoUrl, videoIndex, onClose }: VideoLightboxPr
             <video
               ref={videoRef}
               controls
-              className="w-full h-full object-contain"
+              className="w-full h-full"
               playsInline
             />
           </div>
 
           {/* Info and Comments Section */}
-          <div className="w-full lg:w-96 bg-gradient-to-b from-gray-900 to-gray-950 border-l border-purple-500/30 flex flex-col overflow-hidden">
+          <div className="w-full lg:w-96 bg-neutral-50 dark:bg-neutral-950 border-l border-neutral-200 dark:border-neutral-800 flex flex-col overflow-hidden">
             {/* Video Info */}
-            <div className="p-6 border-b border-purple-500/20">
+            <div className="p-6 border-b border-neutral-200 dark:border-neutral-800">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-2xl font-bold text-white">
+                <h2 className="text-xl font-semibold text-neutral-900 dark:text-white">
                   Video #{videoIndex + 1}
                 </h2>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={handleShare}
-                  className="border-purple-500/30 hover:bg-purple-500/20 text-white"
+                  className="gap-2"
                 >
                   {copied ? (
-                    <Check className="w-4 h-4 mr-2" />
+                    <>
+                      <Check className="w-4 h-4" />
+                      Copied!
+                    </>
                   ) : (
-                    <Share2 className="w-4 h-4 mr-2" />
+                    <>
+                      <Share2 className="w-4 h-4" />
+                      Share
+                    </>
                   )}
-                  {copied ? 'Copied!' : 'Share'}
                 </Button>
               </div>
 
-
-
               {/* Video Actions (Reactions & Repost) */}
-              <div className="mt-4">
-                {!isLoading && event ? (
-                  <VideoActions event={event} />
-                ) : (
-                  <div className="flex items-center gap-2">
-                    <div className="h-8 w-20 bg-purple-500/20 rounded animate-pulse"></div>
-                    <div className="h-8 w-24 bg-purple-500/20 rounded animate-pulse"></div>
-                    <div className="h-8 w-20 bg-purple-500/20 rounded animate-pulse"></div>
-                  </div>
-                )}
-              </div>
+              {!isLoading && event ? (
+                <VideoActions event={event} />
+              ) : (
+                <div className="flex items-center gap-2">
+                  <div className="h-9 w-20 bg-neutral-200 dark:bg-neutral-800 rounded animate-pulse"></div>
+                  <div className="h-9 w-24 bg-neutral-200 dark:bg-neutral-800 rounded animate-pulse"></div>
+                  <div className="h-9 w-20 bg-neutral-200 dark:bg-neutral-800 rounded animate-pulse"></div>
+                </div>
+              )}
             </div>
 
             {/* Comments Section */}
@@ -152,15 +183,15 @@ export function VideoLightbox({ videoUrl, videoIndex, onClose }: VideoLightboxPr
                     root={event}
                     title="Comments"
                     emptyStateMessage="No comments yet"
-                    emptyStateSubtitle="Be the first to share your thoughts"
+                    emptyStateSubtitle="Be the first to comment"
                     className="bg-transparent border-0"
                   />
                 </div>
               ) : (
                 <div className="p-6">
                   <div className="animate-pulse space-y-4">
-                    <div className="h-4 bg-purple-500/20 rounded w-3/4"></div>
-                    <div className="h-4 bg-purple-500/20 rounded w-1/2"></div>
+                    <div className="h-4 bg-neutral-200 dark:bg-neutral-800 rounded w-3/4"></div>
+                    <div className="h-4 bg-neutral-200 dark:bg-neutral-800 rounded w-1/2"></div>
                   </div>
                 </div>
               )}
