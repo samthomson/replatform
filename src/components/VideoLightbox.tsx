@@ -1,7 +1,7 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import Hls from 'hls.js';
-import { X, Share2, Check } from 'lucide-react';
+import { X, Share2, Check, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from './ui/button';
 import { useToast } from '@/hooks/useToast';
 import { VideoActions } from './VideoActions';
@@ -12,15 +12,28 @@ import type { VideoData } from '@/lib/videoData';
 interface VideoLightboxProps {
   video: VideoData;
   videoIndex: number;
+  totalVideos: number;
   onClose: () => void;
+  onNavigate: (index: number) => void;
 }
 
-export function VideoLightbox({ video: videoData, videoIndex, onClose }: VideoLightboxProps) {
+export function VideoLightbox({ video: videoData, videoIndex, totalVideos, onClose, onNavigate }: VideoLightboxProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const hlsRef = useRef<Hls | null>(null);
   const [copied, setCopied] = useState(false);
   const { toast } = useToast();
   const { data: event, isLoading } = useVideoEvent(videoData.hlsUrl, videoIndex);
+
+  const hasPrev = videoIndex > 0;
+  const hasNext = videoIndex < totalVideos - 1;
+
+  const goToPrev = useCallback(() => {
+    if (hasPrev) onNavigate(videoIndex - 1);
+  }, [hasPrev, videoIndex, onNavigate]);
+
+  const goToNext = useCallback(() => {
+    if (hasNext) onNavigate(videoIndex + 1);
+  }, [hasNext, videoIndex, onNavigate]);
 
   // Initialize HLS
   useEffect(() => {
@@ -76,14 +89,16 @@ export function VideoLightbox({ video: videoData, videoIndex, onClose }: VideoLi
     }
   }, [videoData.hlsUrl]);
 
-  // Handle escape key
+  // Handle keyboard navigation
   useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
+    const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
+      if (e.key === 'ArrowLeft') goToPrev();
+      if (e.key === 'ArrowRight') goToNext();
     };
-    document.addEventListener('keydown', handleEscape);
-    return () => document.removeEventListener('keydown', handleEscape);
-  }, [onClose]);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [onClose, goToPrev, goToNext]);
 
   const handleShare = async () => {
     const shareUrl = `${window.location.origin}?video=${videoIndex + 1}`;
@@ -130,6 +145,28 @@ export function VideoLightbox({ video: videoData, videoIndex, onClose }: VideoLi
           >
             <X className="w-6 h-6" />
           </Button>
+
+          {/* Navigation arrows */}
+          {hasPrev && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute left-4 top-1/2 -translate-y-1/2 z-50 text-white hover:bg-white/20 rounded-full h-12 w-12"
+              onClick={goToPrev}
+            >
+              <ChevronLeft className="w-8 h-8" />
+            </Button>
+          )}
+          {hasNext && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute right-4 top-1/2 -translate-y-1/2 z-50 text-white hover:bg-white/20 rounded-full h-12 w-12"
+              onClick={goToNext}
+            >
+              <ChevronRight className="w-8 h-8" />
+            </Button>
+          )}
 
           <video
             ref={videoRef}

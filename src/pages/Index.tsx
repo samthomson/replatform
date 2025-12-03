@@ -36,6 +36,11 @@ const Index = () => {
     setSearchParams({});
   };
 
+  const handleNavigate = (index: number) => {
+    setSelectedVideoIndex(index);
+    setSearchParams({ video: (index + 1).toString() });
+  };
+
   return (
     <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950">
       {/* Header */}
@@ -44,7 +49,7 @@ const Index = () => {
           <div className="flex justify-between items-center">
             <div>
               <h1 className="text-3xl font-bold text-neutral-900 dark:text-white tracking-tight">
-                JACOB WHATEVER
+                Nothing stops this <span className="line-through">train</span> jacob
               </h1>
               <p className="text-lg text-neutral-600 dark:text-neutral-400 mt-1">
                 RIP PUBLICLY
@@ -66,7 +71,9 @@ const Index = () => {
         <VideoLightbox
           video={VIDEO_DATA[selectedVideoIndex]}
           videoIndex={selectedVideoIndex}
+          totalVideos={VIDEO_DATA.length}
           onClose={handleCloseLightbox}
+          onNavigate={handleNavigate}
         />
       )}
     </div>
