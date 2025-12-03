@@ -49,7 +49,7 @@ const Index = () => {
           <div className="flex justify-between items-center">
             <div>
               <h1 className="text-3xl font-bold text-neutral-900 dark:text-white tracking-tight">
-                Nothing stops this <span className="line-through">train</span> jacob
+                NOTHING STOPS THIS <span className="line-through">TRAIN</span> JACOB
               </h1>
               <p className="text-lg text-neutral-600 dark:text-neutral-400 mt-1">
                 RIP PUBLICLY
