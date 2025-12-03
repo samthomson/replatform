@@ -18,10 +18,10 @@ export function VideoActions({ event }: VideoActionsProps) {
   const { user } = useCurrentUser();
   const { mutate: createEvent } = useNostrPublish();
   const { toast } = useToast();
-  
+
   const { reactions, hasReacted, isLoading: reactionsLoading } = useReactions(event.id);
   const { reposts, hasReposted, isLoading: repostsLoading } = useReposts(event.id);
-  
+
   const [isReacting, setIsReacting] = useState(false);
   const [isReposting, setIsReposting] = useState(false);
 
@@ -118,14 +118,14 @@ export function VideoActions({ event }: VideoActionsProps) {
   };
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2 flex-wrap">
       <Button
         variant="outline"
         size="sm"
         onClick={handleReaction}
         disabled={isReacting || hasReacted}
         className={cn(
-          'border-purple-500/30 hover:bg-pink-500/20 hover:border-pink-500/50 transition-all',
+          'border-purple-500/30 hover:bg-pink-500/20 hover:border-pink-500/50 transition-all text-white',
           hasReacted && 'bg-pink-500/20 border-pink-500/50 text-pink-400'
         )}
       >
@@ -143,7 +143,7 @@ export function VideoActions({ event }: VideoActionsProps) {
         onClick={handleRepost}
         disabled={isReposting || hasReposted}
         className={cn(
-          'border-purple-500/30 hover:bg-purple-500/20 hover:border-purple-500/50 transition-all',
+          'border-purple-500/30 hover:bg-purple-500/20 hover:border-purple-500/50 transition-all text-white',
           hasReposted && 'bg-purple-500/20 border-purple-500/50 text-purple-400'
         )}
       >
@@ -153,7 +153,7 @@ export function VideoActions({ event }: VideoActionsProps) {
         </span>
       </Button>
 
-      <ZapButton event={event} variant="outline" size="sm">
+      <ZapButton event={event} variant="outline" size="sm" className="border-purple-500/30 hover:bg-yellow-500/20 hover:border-yellow-500/50 text-white">
         <Zap className="w-4 h-4 mr-2" />
         <span className="text-xs">Zap</span>
       </ZapButton>

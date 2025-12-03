@@ -14,7 +14,7 @@ export function useVideoEvent(videoUrl: string, videoIndex: number) {
   const { nostr } = useNostr();
   const { user } = useCurrentUser();
   const { mutate: createEvent } = useNostrPublish();
-  
+
   const videoId = getVideoId(videoUrl);
 
   return useQuery({
@@ -44,19 +44,18 @@ export function useVideoEvent(videoUrl: string, videoIndex: number) {
           createEvent(
             {
               kind: 21,
-              content: `Memorial video #${videoIndex + 1} from the Jacob Whatever collection`,
+              content: `Video #${videoIndex + 1}`,
               tags: [
-                ['title', `Jacob Whatever - Video #${videoIndex + 1}`],
+                ['title', `Video #${videoIndex + 1}`],
                 ['r', videoUrl],
-                ['imeta', 
+                ['imeta',
                   `url ${videoUrl}`,
                   'm application/x-mpegURL',
-                  `alt Video #${videoIndex + 1} from Jacob Whatever memorial collection`
+                  `alt Video #${videoIndex + 1}`
                 ],
-                ['t', 'memorial'],
                 ['t', 'rip'],
                 ['published_at', Math.floor(Date.now() / 1000).toString()],
-                ['alt', `Memorial video #${videoIndex + 1}`],
+                ['alt', `Video #${videoIndex + 1}`],
               ],
             },
             {
@@ -76,10 +75,10 @@ export function useVideoEvent(videoUrl: string, videoIndex: number) {
         created_at: Math.floor(Date.now() / 1000),
         kind: 21,
         tags: [
-          ['title', `Jacob Whatever - Video #${videoIndex + 1}`],
+          ['title', `Video #${videoIndex + 1}`],
           ['r', videoUrl],
         ],
-        content: `Memorial video #${videoIndex + 1} from the Jacob Whatever collection`,
+        content: `Video #${videoIndex + 1}`,
         sig: '0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000',
       } as NostrEvent;
     },

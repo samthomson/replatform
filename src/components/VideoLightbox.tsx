@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import Hls from 'hls.js';
-import { X, Share2, Copy, Check } from 'lucide-react';
-import { Dialog, DialogContent } from './ui/dialog';
+import { X, Share2, Check } from 'lucide-react';
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from './ui/dialog';
 import { Button } from './ui/button';
 import { useToast } from '@/hooks/useToast';
 import { VideoActions } from './VideoActions';
 import { CommentsSection } from './comments/CommentsSection';
 import { useVideoEvent } from '@/hooks/useVideoEvent';
+import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 
 interface VideoLightboxProps {
   videoUrl: string;
@@ -54,7 +55,7 @@ export function VideoLightbox({ videoUrl, videoIndex, onClose }: VideoLightboxPr
 
   const handleShare = async () => {
     const shareUrl = `${window.location.origin}?video=${videoIndex}`;
-    
+
     if (navigator.share) {
       try {
         await navigator.share({
@@ -78,6 +79,12 @@ export function VideoLightbox({ videoUrl, videoIndex, onClose }: VideoLightboxPr
   return (
     <Dialog open={true} onOpenChange={onClose}>
       <DialogContent className="max-w-6xl w-full p-0 bg-gray-900 border-purple-500/30 overflow-hidden">
+        <VisuallyHidden>
+          <DialogTitle>Video #{videoIndex + 1}</DialogTitle>
+          <DialogDescription>
+            Video player with social features
+          </DialogDescription>
+        </VisuallyHidden>
         <div className="flex flex-col lg:flex-row h-[90vh]">
           {/* Video Player Section */}
           <div className="flex-1 bg-black relative flex items-center justify-center">
@@ -110,7 +117,7 @@ export function VideoLightbox({ videoUrl, videoIndex, onClose }: VideoLightboxPr
                   variant="outline"
                   size="sm"
                   onClick={handleShare}
-                  className="border-purple-500/30 hover:bg-purple-500/20"
+                  className="border-purple-500/30 hover:bg-purple-500/20 text-white"
                 >
                   {copied ? (
                     <Check className="w-4 h-4 mr-2" />
@@ -121,26 +128,34 @@ export function VideoLightbox({ videoUrl, videoIndex, onClose }: VideoLightboxPr
                 </Button>
               </div>
 
-              <p className="text-purple-200/60 text-sm mb-4">
-                Part of the Jacob Whatever memorial collection
-              </p>
+
 
               {/* Video Actions (Reactions & Repost) */}
-              {!isLoading && event && (
-                <VideoActions event={event} />
-              )}
+              <div className="mt-4">
+                {!isLoading && event ? (
+                  <VideoActions event={event} />
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <div className="h-8 w-20 bg-purple-500/20 rounded animate-pulse"></div>
+                    <div className="h-8 w-24 bg-purple-500/20 rounded animate-pulse"></div>
+                    <div className="h-8 w-20 bg-purple-500/20 rounded animate-pulse"></div>
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Comments Section */}
             <div className="flex-1 overflow-y-auto">
               {!isLoading && event ? (
-                <CommentsSection
-                  root={event}
-                  title="Comments"
-                  emptyStateMessage="No comments yet"
-                  emptyStateSubtitle="Be the first to share your thoughts"
-                  className="h-full"
-                />
+                <div className="p-6">
+                  <CommentsSection
+                    root={event}
+                    title="Comments"
+                    emptyStateMessage="No comments yet"
+                    emptyStateSubtitle="Be the first to share your thoughts"
+                    className="bg-transparent border-0"
+                  />
+                </div>
               ) : (
                 <div className="p-6">
                   <div className="animate-pulse space-y-4">
