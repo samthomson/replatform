@@ -25,27 +25,44 @@ export function VideoLightbox({ video, videoIndex, onClose }: VideoLightboxProps
 
   useEffect(() => {
     const videoElement = videoRef.current;
-    if (!videoElement) return;
+    if (!videoElement) {
+      console.log('No video element found');
+      return;
+    }
+
+    console.log('Initializing HLS for:', video.hlsUrl);
 
     if (Hls.isSupported()) {
-      const hls = new Hls();
+      console.log('HLS.js is supported, creating player...');
+      const hls = new Hls({
+        debug: true,
+      });
+
       hls.loadSource(video.hlsUrl);
       hls.attachMedia(videoElement);
+
       hls.on(Hls.Events.MANIFEST_PARSED, () => {
-        videoElement.play().catch(() => {
-          // Autoplay might be blocked
+        console.log('HLS manifest parsed successfully');
+        videoElement.play().catch((e) => {
+          console.log('Autoplay prevented:', e);
         });
       });
 
+      hls.on(Hls.Events.ERROR, (event, data) => {
+        console.error('HLS Error:', data);
+      });
+
       return () => {
+        console.log('Destroying HLS instance');
         hls.destroy();
       };
     } else if (videoElement.canPlayType('application/vnd.apple.mpegurl')) {
-      // Safari / iOS native HLS
+      console.log('Using native HLS support (Safari)');
       videoElement.src = video.hlsUrl;
       videoElement.addEventListener('loadedmetadata', () => {
-        videoElement.play().catch(() => {
-          // Autoplay might be blocked
+        console.log('Video metadata loaded');
+        videoElement.play().catch((e) => {
+          console.log('Autoplay prevented:', e);
         });
       });
     } else {
@@ -55,7 +72,7 @@ export function VideoLightbox({ video, videoIndex, onClose }: VideoLightboxProps
 
   const handleShare = async () => {
     const shareUrl = `${window.location.origin}?video=${videoIndex}`;
-    
+
     if (navigator.share) {
       try {
         await navigator.share({
@@ -85,7 +102,7 @@ export function VideoLightbox({ video, videoIndex, onClose }: VideoLightboxProps
             Video player with social features
           </DialogDescription>
         </VisuallyHidden>
-        
+
         <div className="flex flex-col lg:flex-row h-[90vh]">
           {/* Video Player Section */}
           <div className="flex-1 bg-black relative flex items-center justify-center">

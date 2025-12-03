@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HLS Test</title>
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      background: #000;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+    video {
+      max-width: 90vw;
+      max-height: 90vh;
+    }
+  </style>
+</head>
+<body>
+  <video id="video" controls playsinline></video>
+  
+  <script>
+    const video = document.getElementById('video');
+    const url = 'https://stream.divine.video/bda36984-1014-472e-8002-69426d96241a/playlist.m3u8';
+
+    if (Hls.isSupported()) {
+      console.log('HLS.js is supported');
+      const hls = new Hls({ debug: true });
+      hls.loadSource(url);
+      hls.attachMedia(video);
+      hls.on(Hls.Events.MANIFEST_PARSED, () => {
+        console.log('Manifest parsed, playing...');
+        video.play();
+      });
+      hls.on(Hls.Events.ERROR, (event, data) => {
+        console.error('HLS Error:', data);
+      });
+    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+      console.log('Using native HLS (Safari)');
+      video.src = url;
+      video.addEventListener('loadedmetadata', () => {
+        console.log('Metadata loaded, playing...');
+        video.play();
+      });
+    } else {
+      console.error('HLS not supported');
+    }
+  </script>
+</body>
+</html>
