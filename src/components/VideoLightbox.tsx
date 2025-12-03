@@ -127,8 +127,7 @@ export function VideoLightbox({ video, videoIndex, onClose }: VideoLightboxProps
               id="video"
               controls
               playsInline
-              poster={video.thumbnailBlossomUrl}
-              className="w-full h-full"
+              className="w-full h-full bg-black"
             />
           </div>
 
