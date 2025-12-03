@@ -3,7 +3,7 @@ import { useNostr } from '@nostrify/react';
 import type { NostrEvent } from '@nostrify/nostrify';
 
 const VIDEO_PUBKEY = '2b766fdedf7091878a40fa0647fd6d838d0a921d5d3ca308c7006d43891cdc0c';
-const VIDEO_KIND = 34236;
+const VIDEO_KIND = 34326;
 
 export interface VideoData {
   event: NostrEvent;
@@ -12,28 +12,18 @@ export interface VideoData {
 }
 
 function parseVideoEvent(event: NostrEvent): VideoData | null {
-  // Find the imeta tag
-  const imetaTag = event.tags.find(([name]) => name === 'imeta');
-  if (!imetaTag) return null;
+  // Get url tag
+  const urlTag = event.tags.find(([name]) => name === 'url');
+  if (!urlTag || !urlTag[1]) return null;
 
-  let videoUrl = '';
-  let thumbnailUrl = '';
-
-  // Parse imeta tag values (format: "key value")
-  for (let i = 1; i < imetaTag.length; i++) {
-    const part = imetaTag[i];
-    if (part.startsWith('url ')) {
-      videoUrl = part.slice(4);
-    } else if (part.startsWith('image ')) {
-      thumbnailUrl = part.slice(6);
-    }
-  }
-
-  if (!videoUrl) return null;
+  // Get thumb or image tag for thumbnail
+  const thumbTag = event.tags.find(([name]) => name === 'thumb');
+  const imageTag = event.tags.find(([name]) => name === 'image');
+  const thumbnailUrl = thumbTag?.[1] || imageTag?.[1] || '';
 
   return {
     event,
-    videoUrl,
+    videoUrl: urlTag[1],
     thumbnailUrl,
   };
 }
@@ -56,22 +46,18 @@ export function useVideos() {
         { signal }
       );
 
-      console.log('Fetched video events:', events.length);
-      events.forEach((e, i) => {
-        const dTag = e.tags.find(([name]) => name === 'd')?.[1];
-        const imetaTag = e.tags.find(([name]) => name === 'imeta');
-        console.log(`Event ${i}: d=${dTag}, imeta parts=${imetaTag?.length || 0}, created=${e.created_at}`);
+      // Filter to only include events from our client
+      const filteredEvents = events.filter(e => {
+        const clientTag = e.tags.find(([name]) => name === 'client');
+        return clientTag && clientTag[1] === 'replatform.shakespeare.wtf';
       });
+
+      console.log('Fetched video events:', events.length, 'filtered:', filteredEvents.length);
 
       // Parse events into video data, filter out invalid ones
-      const videos = events
+      const videos = filteredEvents
         .map(parseVideoEvent)
         .filter((v): v is VideoData => v !== null);
-
-      console.log('Parsed videos:', videos.length);
-      videos.forEach((v, i) => {
-        console.log(`Video ${i}: url=${v.videoUrl}, thumb=${v.thumbnailUrl}`);
-      });
 
       // Sort by created_at ascending (oldest first)
       videos.sort((a, b) => a.event.created_at - b.event.created_at);

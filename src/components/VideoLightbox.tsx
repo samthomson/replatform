@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Share2, Check, ChevronLeft, ChevronRight, Code } from 'lucide-react';
+import { X, Share2, Check, ChevronLeft, ChevronRight, Code, AlertCircle } from 'lucide-react';
 import { Button } from './ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
 import { useToast } from '@/hooks/useToast';
@@ -20,6 +20,7 @@ export function VideoLightbox({ video: videoData, videoIndex, totalVideos, onClo
   const videoRef = useRef<HTMLVideoElement>(null);
   const [copied, setCopied] = useState(false);
   const [showRawEvent, setShowRawEvent] = useState(false);
+  const [videoError, setVideoError] = useState(false);
   const { toast } = useToast();
 
   // The event is already available from the video data
@@ -41,6 +42,7 @@ export function VideoLightbox({ video: videoData, videoIndex, totalVideos, onClo
     const video = videoRef.current;
     if (!video || !videoData.videoUrl) return;
 
+    setVideoError(false);
     video.src = videoData.videoUrl;
     video.load();
 
@@ -96,7 +98,7 @@ export function VideoLightbox({ video: videoData, videoIndex, totalVideos, onClo
     >
       <div className="bg-white dark:bg-neutral-900 w-full max-w-6xl h-[90vh] rounded-lg overflow-hidden flex flex-col lg:flex-row">
         {/* Video Player */}
-        <div className="flex-1 bg-black relative flex items-center justify-center min-h-0">
+        <div className="flex-[2] lg:flex-1 bg-black relative flex items-center justify-center min-h-[40vh] lg:min-h-0">
           <Button
             variant="ghost"
             size="icon"
@@ -128,17 +130,26 @@ export function VideoLightbox({ video: videoData, videoIndex, totalVideos, onClo
             </Button>
           )}
 
-          <video
-            ref={videoRef}
-            controls
-            playsInline
-            poster={videoData.thumbnailUrl}
-            className="w-full h-full object-contain"
-          />
+          {videoError ? (
+            <div className="flex flex-col items-center justify-center text-white p-8 text-center">
+              <AlertCircle className="w-16 h-16 mb-4 text-red-400" />
+              <p className="text-lg font-medium mb-2">Failed to load video</p>
+              <p className="text-sm text-neutral-400 break-all max-w-md">{videoData.videoUrl}</p>
+            </div>
+          ) : (
+            <video
+              ref={videoRef}
+              controls
+              playsInline
+              poster={videoData.thumbnailUrl}
+              className="w-full h-full object-contain"
+              onError={() => setVideoError(true)}
+            />
+          )}
         </div>
 
         {/* Sidebar */}
-        <div className="w-full lg:w-96 lg:flex-shrink-0 bg-neutral-50 dark:bg-neutral-950 border-t lg:border-t-0 lg:border-l border-neutral-200 dark:border-neutral-800 flex flex-col overflow-hidden">
+        <div className="flex-1 lg:flex-none w-full lg:w-96 bg-neutral-50 dark:bg-neutral-950 border-t lg:border-t-0 lg:border-l border-neutral-200 dark:border-neutral-800 flex flex-col overflow-hidden">
           <div className="p-6 border-b border-neutral-200 dark:border-neutral-800">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-semibold text-neutral-900 dark:text-white">
