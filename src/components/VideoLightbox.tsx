@@ -1,4 +1,4 @@
-import { useRef, useEffect } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import Hls from 'hls.js';
 import { X, Share2, Check } from 'lucide-react';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from './ui/dialog';
@@ -9,7 +9,6 @@ import { CommentsSection } from './comments/CommentsSection';
 import { useVideoEvent } from '@/hooks/useVideoEvent';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import type { VideoData } from '@/lib/videoData';
-import { useState } from 'react';
 
 interface VideoLightboxProps {
   video: VideoData;
@@ -18,64 +17,63 @@ interface VideoLightboxProps {
 }
 
 export function VideoLightbox({ video, videoIndex, onClose }: VideoLightboxProps) {
-  const videoRef = useRef<HTMLVideoElement>(null);
   const [copied, setCopied] = useState(false);
+  const [videoElement, setVideoElement] = useState<HTMLVideoElement | null>(null);
   const { toast } = useToast();
   const { data: event, isLoading } = useVideoEvent(video.hlsUrl, videoIndex);
 
+  // Callback ref to get the video element
+  const videoRefCallback = useCallback((node: HTMLVideoElement | null) => {
+    console.log('Video ref callback called with:', node);
+    setVideoElement(node);
+  }, []);
+
   useEffect(() => {
-    const videoElement = videoRef.current;
     if (!videoElement) {
-      console.log('No video element found');
+      console.log('No video element yet');
       return;
     }
 
-    console.log('Initializing HLS for:', video.hlsUrl);
-
-    let hls: Hls | null = null;
+    console.log('Video element ready, initializing HLS for:', video.hlsUrl);
 
     if (Hls.isSupported()) {
       console.log('HLS.js is supported, creating player...');
-      hls = new Hls({
-        debug: true,
+      const hls = new Hls({
+        debug: false,
       });
 
       hls.loadSource(video.hlsUrl);
       hls.attachMedia(videoElement);
 
       hls.on(Hls.Events.MANIFEST_PARSED, () => {
-        console.log('HLS manifest parsed successfully, attempting autoplay...');
+        console.log('HLS manifest parsed, playing...');
         videoElement.play().catch((e) => {
-          console.log('Autoplay prevented (normal):', e.message);
+          console.log('Autoplay blocked:', e.message);
         });
       });
 
       hls.on(Hls.Events.ERROR, (event, data) => {
         console.error('HLS Error:', data);
       });
+
+      return () => {
+        console.log('Cleaning up HLS');
+        hls.destroy();
+      };
     } else if (videoElement.canPlayType('application/vnd.apple.mpegurl')) {
-      console.log('Using native HLS support (Safari)');
+      console.log('Using native HLS (Safari)');
       videoElement.src = video.hlsUrl;
       videoElement.addEventListener('loadedmetadata', () => {
-        console.log('Video metadata loaded');
         videoElement.play().catch((e) => {
-          console.log('Autoplay prevented (normal):', e.message);
+          console.log('Autoplay blocked:', e.message);
         });
       });
     } else {
-      console.error('HLS not supported in this browser');
+      console.error('HLS not supported');
     }
-
-    return () => {
-      if (hls) {
-        console.log('Destroying HLS instance');
-        hls.destroy();
-      }
-    };
-  }, [video.hlsUrl]);
+  }, [videoElement, video.hlsUrl]);
 
   const handleShare = async () => {
-    // Use 1-indexed video number in URL to match UI display
     const shareUrl = `${window.location.origin}?video=${videoIndex + 1}`;
 
     if (navigator.share) {
@@ -85,14 +83,14 @@ export function VideoLightbox({ video, videoIndex, onClose }: VideoLightboxProps
           url: shareUrl,
         });
       } catch (error) {
-        // User cancelled or error occurred
+        // User cancelled
       }
     } else {
       await navigator.clipboard.writeText(shareUrl);
       setCopied(true);
       toast({
         title: 'Link copied!',
-        description: 'Share this link to let others view this video',
+        description: 'Share this link to view this video',
       });
       setTimeout(() => setCopied(false), 2000);
     }
@@ -104,13 +102,13 @@ export function VideoLightbox({ video, videoIndex, onClose }: VideoLightboxProps
         <VisuallyHidden>
           <DialogTitle>Video #{videoIndex + 1}</DialogTitle>
           <DialogDescription>
-            Video player with social features
+            Video player
           </DialogDescription>
         </VisuallyHidden>
 
         <div className="flex flex-col lg:flex-row h-[90vh]">
-          {/* Video Player Section */}
-          <div className="flex-1 bg-black relative flex items-center justify-center">
+          {/* Video Player */}
+          <div className="flex-1 bg-black relative">
             <Button
               variant="ghost"
               size="icon"
@@ -121,17 +119,16 @@ export function VideoLightbox({ video, videoIndex, onClose }: VideoLightboxProps
             </Button>
 
             <video
-              ref={videoRef}
-              id="video"
+              ref={videoRefCallback}
               controls
               playsInline
-              className="w-full h-full bg-black"
+              className="w-full h-full"
+              style={{ objectFit: 'contain' }}
             />
           </div>
 
-          {/* Info and Comments Section */}
+          {/* Sidebar */}
           <div className="w-full lg:w-96 bg-neutral-50 dark:bg-neutral-950 border-l border-neutral-200 dark:border-neutral-800 flex flex-col overflow-hidden">
-            {/* Video Info */}
             <div className="p-6 border-b border-neutral-200 dark:border-neutral-800">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-semibold text-neutral-900 dark:text-white">
@@ -157,7 +154,6 @@ export function VideoLightbox({ video, videoIndex, onClose }: VideoLightboxProps
                 </Button>
               </div>
 
-              {/* Video Actions (Reactions & Repost) */}
               {!isLoading && event ? (
                 <VideoActions event={event} />
               ) : (
@@ -169,7 +165,6 @@ export function VideoLightbox({ video, videoIndex, onClose }: VideoLightboxProps
               )}
             </div>
 
-            {/* Comments Section */}
             <div className="flex-1 overflow-y-auto">
               {!isLoading && event ? (
                 <div className="p-6">
