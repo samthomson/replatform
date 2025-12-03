@@ -49,11 +49,10 @@ export function useVideoEvent(videoUrl: string, videoIndex: number) {
                 ['title', `Video #${videoIndex + 1}`],
                 ['r', videoUrl],
                 ['imeta',
-                  `url ${videoUrl}`,
+                  'url ' + videoUrl,
                   'm application/x-mpegURL',
-                  `alt Video #${videoIndex + 1}`
+                  'alt Video #' + (videoIndex + 1)
                 ],
-                ['t', 'rip'],
                 ['published_at', Math.floor(Date.now() / 1000).toString()],
                 ['alt', `Video #${videoIndex + 1}`],
               ],

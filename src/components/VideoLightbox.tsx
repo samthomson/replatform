@@ -8,23 +8,24 @@ import { VideoActions } from './VideoActions';
 import { CommentsSection } from './comments/CommentsSection';
 import { useVideoEvent } from '@/hooks/useVideoEvent';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
+import type { VideoData } from '@/lib/videoData';
 
 interface VideoLightboxProps {
-  videoUrl: string;
+  video: VideoData;
   videoIndex: number;
   onClose: () => void;
 }
 
-export function VideoLightbox({ videoUrl, videoIndex, onClose }: VideoLightboxProps) {
+export function VideoLightbox({ video, videoIndex, onClose }: VideoLightboxProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const hlsRef = useRef<Hls | null>(null);
   const [copied, setCopied] = useState(false);
   const { toast } = useToast();
-  const { data: event, isLoading } = useVideoEvent(videoUrl, videoIndex);
+  const { data: event, isLoading } = useVideoEvent(video.hlsUrl, videoIndex);
 
   useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
+    const videoElement = videoRef.current;
+    if (!videoElement) return;
 
     // Clean up any existing HLS instance
     if (hlsRef.current) {
@@ -34,35 +35,34 @@ export function VideoLightbox({ videoUrl, videoIndex, onClose }: VideoLightboxPr
 
     if (Hls.isSupported()) {
       const hls = new Hls({
+        debug: false,
         enableWorker: true,
         lowLatencyMode: false,
+        backBufferLength: 90,
       });
 
       hlsRef.current = hls;
 
-      hls.loadSource(videoUrl);
-      hls.attachMedia(video);
+      hls.loadSource(video.hlsUrl);
+      hls.attachMedia(videoElement);
 
       hls.on(Hls.Events.MANIFEST_PARSED, () => {
-        video.play().catch(() => {
-          // Ignore autoplay errors
+        videoElement.play().catch((e) => {
+          console.log('Autoplay prevented:', e);
         });
       });
 
       hls.on(Hls.Events.ERROR, (event, data) => {
-        console.error('HLS Error:', data);
         if (data.fatal) {
+          console.error('Fatal HLS error:', data);
           switch (data.type) {
             case Hls.ErrorTypes.NETWORK_ERROR:
-              console.error('Network error, trying to recover...');
               hls.startLoad();
               break;
             case Hls.ErrorTypes.MEDIA_ERROR:
-              console.error('Media error, trying to recover...');
               hls.recoverMediaError();
               break;
             default:
-              console.error('Fatal error, cannot recover');
               break;
           }
         }
@@ -71,20 +71,20 @@ export function VideoLightbox({ videoUrl, videoIndex, onClose }: VideoLightboxPr
       return () => {
         hls.destroy();
       };
-    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+    } else if (videoElement.canPlayType('application/vnd.apple.mpegurl')) {
       // Native HLS support (Safari)
-      video.src = videoUrl;
-      video.addEventListener('loadedmetadata', () => {
-        video.play().catch(() => {
-          // Ignore autoplay errors
+      videoElement.src = video.hlsUrl;
+      videoElement.addEventListener('loadedmetadata', () => {
+        videoElement.play().catch((e) => {
+          console.log('Autoplay prevented:', e);
         });
       });
     }
-  }, [videoUrl]);
+  }, [video.hlsUrl]);
 
   const handleShare = async () => {
     const shareUrl = `${window.location.origin}?video=${videoIndex}`;
-    
+
     if (navigator.share) {
       try {
         await navigator.share({
@@ -114,7 +114,7 @@ export function VideoLightbox({ videoUrl, videoIndex, onClose }: VideoLightboxPr
             Video player with social features
           </DialogDescription>
         </VisuallyHidden>
-        
+
         <div className="flex flex-col lg:flex-row h-[90vh]">
           {/* Video Player Section */}
           <div className="flex-1 bg-black relative flex items-center justify-center">
