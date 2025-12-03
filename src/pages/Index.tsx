@@ -15,20 +15,20 @@ const Index = () => {
     description: 'Video gallery',
   });
 
-  // Handle deep linking from URL params
+  // Handle deep linking from URL params (1-indexed in URL, 0-indexed internally)
   useEffect(() => {
     const videoParam = searchParams.get('video');
     if (videoParam) {
-      const index = parseInt(videoParam, 10);
-      if (!isNaN(index) && index >= 0 && index < VIDEO_DATA.length) {
-        setSelectedVideoIndex(index);
+      const videoNumber = parseInt(videoParam, 10);
+      if (!isNaN(videoNumber) && videoNumber >= 1 && videoNumber <= VIDEO_DATA.length) {
+        setSelectedVideoIndex(videoNumber - 1); // Convert to 0-indexed
       }
     }
   }, [searchParams]);
 
   const handleVideoClick = (index: number) => {
     setSelectedVideoIndex(index);
-    setSearchParams({ video: index.toString() });
+    setSearchParams({ video: (index + 1).toString() }); // Convert to 1-indexed for URL
   };
 
   const handleCloseLightbox = () => {

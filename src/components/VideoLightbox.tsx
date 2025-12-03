@@ -71,7 +71,8 @@ export function VideoLightbox({ video, videoIndex, onClose }: VideoLightboxProps
   }, [video.hlsUrl]);
 
   const handleShare = async () => {
-    const shareUrl = `${window.location.origin}?video=${videoIndex}`;
+    // Use 1-indexed video number in URL to match UI display
+    const shareUrl = `${window.location.origin}?video=${videoIndex + 1}`;
 
     if (navigator.share) {
       try {
