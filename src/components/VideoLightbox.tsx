@@ -16,13 +16,13 @@ interface VideoLightboxProps {
   onClose: () => void;
 }
 
-export function VideoLightbox({ video, videoIndex, onClose }: VideoLightboxProps) {
+export function VideoLightbox({ video: videoData, videoIndex, onClose }: VideoLightboxProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const hlsRef = useRef<Hls | null>(null);
   const [copied, setCopied] = useState(false);
   const [videoElement, setVideoElement] = useState<HTMLVideoElement | null>(null);
   const { toast } = useToast();
-  const { data: event, isLoading } = useVideoEvent(video.hlsUrl, videoIndex);
+  const { data: event, isLoading } = useVideoEvent(videoData.hlsUrl, videoIndex);
 
   // Callback ref to get video element
   const setRefs = useCallback((node: HTMLVideoElement | null) => {
@@ -39,9 +39,9 @@ export function VideoLightbox({ video, videoIndex, onClose }: VideoLightboxProps
       return;
     }
 
-    const hlsUrl = video.hlsUrl;
+    const hlsUrl = videoData.hlsUrl;
     console.log('Initializing HLS');
-    console.log('video prop:', video);
+    console.log('videoData:', videoData);
     console.log('hlsUrl:', hlsUrl);
     console.log('hlsUrl type:', typeof hlsUrl);
 
@@ -106,7 +106,7 @@ export function VideoLightbox({ video, videoIndex, onClose }: VideoLightboxProps
     } else {
       console.error('HLS not supported');
     }
-  }, [videoElement, video.hlsUrl]);
+  }, [videoElement, videoData.hlsUrl]);
 
   const handleShare = async () => {
     const shareUrl = `${window.location.origin}?video=${videoIndex + 1}`;
@@ -155,7 +155,7 @@ export function VideoLightbox({ video, videoIndex, onClose }: VideoLightboxProps
               ref={setRefs}
               controls
               playsInline
-              poster={video.thumbnailBlossomUrl}
+              poster={videoData.thumbnailBlossomUrl}
               className="w-full h-full object-contain"
             />
           </div>
