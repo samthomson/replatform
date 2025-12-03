@@ -52,7 +52,7 @@ const Index = () => {
                 NOTHING STOPS THIS <span className="line-through">TRAIN</span> JACOB
               </h1>
               <p className="text-lg text-neutral-600 dark:text-neutral-400 mt-1">
-                RIP PUBLICLY
+                RIP, PUBLICLY
               </p>
             </div>
 
@@ -65,6 +65,15 @@ const Index = () => {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <VideoGrid videos={VIDEO_DATA} onVideoClick={handleVideoClick} />
       </main>
+
+      {/* Footer */}
+      <footer className="border-t border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 py-6">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <p className="text-sm text-neutral-500 dark:text-neutral-400">
+            Vibed by the official unofficial official unofficial jacob buffington appreciation club
+          </p>
+        </div>
+      </footer>
 
       {/* Lightbox */}
       {selectedVideoIndex !== null && (
