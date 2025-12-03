@@ -5,27 +5,28 @@ import { VideoGrid } from '@/components/VideoGrid';
 import { VideoLightbox } from '@/components/VideoLightbox';
 import { LoginArea } from '@/components/auth/LoginArea';
 import { SignupLink } from '@/components/auth/SignupLink';
-import { VIDEO_DATA } from '@/lib/videoData';
+import { useVideos } from '@/hooks/useVideos';
 
 const Index = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [selectedVideoIndex, setSelectedVideoIndex] = useState<number | null>(null);
+  const { data: videos = [], isLoading } = useVideos();
 
   useSeoMeta({
-    title: 'Jacob Whatever - RIP PUBLICLY',
+    title: 'Nothing stops this train jacob',
     description: 'Video gallery',
   });
 
   // Handle deep linking from URL params (1-indexed in URL, 0-indexed internally)
   useEffect(() => {
     const videoParam = searchParams.get('video');
-    if (videoParam) {
+    if (videoParam && videos.length > 0) {
       const videoNumber = parseInt(videoParam, 10);
-      if (!isNaN(videoNumber) && videoNumber >= 1 && videoNumber <= VIDEO_DATA.length) {
+      if (!isNaN(videoNumber) && videoNumber >= 1 && videoNumber <= videos.length) {
         setSelectedVideoIndex(videoNumber - 1); // Convert to 0-indexed
       }
     }
-  }, [searchParams]);
+  }, [searchParams, videos.length]);
 
   const handleVideoClick = (index: number) => {
     setSelectedVideoIndex(index);
@@ -64,7 +65,7 @@ const Index = () => {
 
       {/* Video Grid */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <VideoGrid videos={VIDEO_DATA} onVideoClick={handleVideoClick} />
+        <VideoGrid videos={videos} isLoading={isLoading} onVideoClick={handleVideoClick} />
       </main>
 
       {/* Footer */}
@@ -80,11 +81,11 @@ const Index = () => {
       </footer>
 
       {/* Lightbox */}
-      {selectedVideoIndex !== null && (
+      {selectedVideoIndex !== null && videos[selectedVideoIndex] && (
         <VideoLightbox
-          video={VIDEO_DATA[selectedVideoIndex]}
+          video={videos[selectedVideoIndex]}
           videoIndex={selectedVideoIndex}
-          totalVideos={VIDEO_DATA.length}
+          totalVideos={videos.length}
           onClose={handleCloseLightbox}
           onNavigate={handleNavigate}
         />

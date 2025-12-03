@@ -1,13 +1,11 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import Hls from 'hls.js';
 import { X, Share2, Check, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from './ui/button';
 import { useToast } from '@/hooks/useToast';
 import { VideoActions } from './VideoActions';
 import { CommentsSection } from './comments/CommentsSection';
-import { useVideoEvent } from '@/hooks/useVideoEvent';
-import type { VideoData } from '@/lib/videoData';
+import type { VideoData } from '@/hooks/useVideos';
 
 interface VideoLightboxProps {
   video: VideoData;
@@ -19,10 +17,11 @@ interface VideoLightboxProps {
 
 export function VideoLightbox({ video: videoData, videoIndex, totalVideos, onClose, onNavigate }: VideoLightboxProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const hlsRef = useRef<Hls | null>(null);
   const [copied, setCopied] = useState(false);
   const { toast } = useToast();
-  const { data: event, isLoading } = useVideoEvent(videoData.hlsUrl, videoIndex);
+
+  // The event is already available from the video data
+  const event = videoData.event;
 
   const hasPrev = videoIndex > 0;
   const hasNext = videoIndex < totalVideos - 1;
@@ -35,59 +34,18 @@ export function VideoLightbox({ video: videoData, videoIndex, totalVideos, onClo
     if (hasNext) onNavigate(videoIndex + 1);
   }, [hasNext, videoIndex, onNavigate]);
 
-  // Initialize HLS
+  // Set video source
   useEffect(() => {
     const video = videoRef.current;
-    if (!video || !videoData.hlsUrl) return;
+    if (!video || !videoData.videoUrl) return;
 
-    // Cleanup previous HLS instance
-    if (hlsRef.current) {
-      hlsRef.current.destroy();
-      hlsRef.current = null;
-    }
+    video.src = videoData.videoUrl;
+    video.load();
 
-    if (Hls.isSupported()) {
-      const hls = new Hls({
-        enableWorker: true,
-        lowLatencyMode: false,
-        backBufferLength: 90,
-        maxBufferLength: 30,
-        maxMaxBufferLength: 60,
-        startLevel: -1,
-        capLevelToPlayerSize: true,
-      });
-
-      hls.loadSource(videoData.hlsUrl);
-      hls.attachMedia(video);
-
-      hls.on(Hls.Events.MANIFEST_PARSED, () => {
-        video.play().catch(() => {
-          // Autoplay blocked, user will click play
-        });
-      });
-
-      hls.on(Hls.Events.ERROR, (_event, data) => {
-        if (data.fatal) {
-          console.error('Fatal HLS error:', data);
-        }
-      });
-
-      hlsRef.current = hls;
-
-      return () => {
-        hls.destroy();
-        hlsRef.current = null;
-      };
-    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-      // Native HLS support (Safari)
-      video.src = videoData.hlsUrl;
-      video.addEventListener('loadedmetadata', () => {
-        video.play().catch(() => {
-          // Autoplay blocked
-        });
-      });
-    }
-  }, [videoData.hlsUrl]);
+    video.play().catch(() => {
+      // Autoplay blocked, user will click play
+    });
+  }, [videoData.videoUrl]);
 
   // Handle keyboard navigation
   useEffect(() => {
@@ -172,7 +130,7 @@ export function VideoLightbox({ video: videoData, videoIndex, totalVideos, onClo
             ref={videoRef}
             controls
             playsInline
-            poster={videoData.thumbnailBlossomUrl}
+            poster={videoData.thumbnailUrl}
             className="w-full h-full object-contain"
           />
         </div>
@@ -199,36 +157,19 @@ export function VideoLightbox({ video: videoData, videoIndex, totalVideos, onClo
               </Button>
             </div>
 
-            {!isLoading && event ? (
-              <VideoActions event={event} />
-            ) : (
-              <div className="flex items-center gap-2">
-                <div className="h-9 w-20 bg-neutral-200 dark:bg-neutral-800 rounded animate-pulse"></div>
-                <div className="h-9 w-24 bg-neutral-200 dark:bg-neutral-800 rounded animate-pulse"></div>
-                <div className="h-9 w-20 bg-neutral-200 dark:bg-neutral-800 rounded animate-pulse"></div>
-              </div>
-            )}
+            <VideoActions event={event} />
           </div>
 
           <div className="flex-1 overflow-y-auto">
-            {!isLoading && event ? (
-              <div className="p-6">
-                <CommentsSection
-                  root={event}
-                  title="Comments"
-                  emptyStateMessage="No comments yet"
-                  emptyStateSubtitle="Be the first to comment"
-                  className="bg-transparent border-0"
-                />
-              </div>
-            ) : (
-              <div className="p-6">
-                <div className="animate-pulse space-y-4">
-                  <div className="h-4 bg-neutral-200 dark:bg-neutral-800 rounded w-3/4"></div>
-                  <div className="h-4 bg-neutral-200 dark:bg-neutral-800 rounded w-1/2"></div>
-                </div>
-              </div>
-            )}
+            <div className="p-6">
+              <CommentsSection
+                root={event}
+                title="Comments"
+                emptyStateMessage="No comments yet"
+                emptyStateSubtitle="Be the first to comment"
+                className="bg-transparent border-0"
+              />
+            </div>
           </div>
         </div>
       </div>

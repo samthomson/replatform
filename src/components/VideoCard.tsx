@@ -1,6 +1,5 @@
-import { useState } from 'react';
 import { Play } from 'lucide-react';
-import type { VideoData } from '@/lib/videoData';
+import type { VideoData } from '@/hooks/useVideos';
 
 interface VideoCardProps {
   video: VideoData;
@@ -9,11 +8,6 @@ interface VideoCardProps {
 }
 
 export function VideoCard({ video, index, onClick }: VideoCardProps) {
-  const [imageError, setImageError] = useState(false);
-
-  // Try Blossom URL first, fallback to thumbnail URL
-  const thumbnailSrc = imageError ? video.thumbnailUrl : video.thumbnailBlossomUrl;
-
   return (
     <button
       className="group relative aspect-video bg-neutral-100 dark:bg-neutral-900 rounded-lg overflow-hidden border border-neutral-200 dark:border-neutral-800 hover:border-neutral-400 dark:hover:border-neutral-600 transition-all cursor-pointer"
@@ -21,10 +15,9 @@ export function VideoCard({ video, index, onClick }: VideoCardProps) {
     >
       {/* Thumbnail Image */}
       <img
-        src={thumbnailSrc}
+        src={video.thumbnailUrl}
         alt={`Video #${index + 1}`}
         className="w-full h-full object-cover"
-        onError={() => setImageError(true)}
       />
 
       {/* Play overlay on hover */}
