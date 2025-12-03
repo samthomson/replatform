@@ -127,7 +127,7 @@ export const VIDEO_DATA: VideoData[] = [
   },
   {
     hlsUrl: 'https://stream.divine.video/41bb6d09-3a41-459f-99e4-aa22ddcf511c/playlist.m3u8',
-    thumbnailUrl: 'https://stream.divine.video/41bb6d09-3a41-459f-99e4-aa22ddcf511c/playlist.m3u8',
+    thumbnailUrl: 'https://stream.divine.video/41bb6d09-3a41-459f-99e4-aa22ddcf511c/thumbnail.jpg',
     thumbnailBlossomUrl: 'https://cdn.divine.video/26bd136282396cdbda45203f2906163e57bb84d6922696faa32e23b7643d77d9.jpg',
   },
   {
