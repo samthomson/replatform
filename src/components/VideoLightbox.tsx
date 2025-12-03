@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState, useCallback } from 'react';
+import { useState, useRef, useEffect, memo } from 'react';
 import Hls from 'hls.js';
 import { X, Share2, Check } from 'lucide-react';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from './ui/dialog';
@@ -10,55 +10,27 @@ import { useVideoEvent } from '@/hooks/useVideoEvent';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import type { VideoData } from '@/lib/videoData';
 
-interface VideoLightboxProps {
-  video: VideoData;
-  videoIndex: number;
-  onClose: () => void;
+interface VideoPlayerProps {
+  hlsUrl: string;
+  poster?: string;
 }
 
-export function VideoLightbox({ video: videoData, videoIndex, onClose }: VideoLightboxProps) {
-  const videoRef = useRef<HTMLVideoElement | null>(null);
+// Memoized video player component to prevent re-renders from parent state changes
+const VideoPlayer = memo(function VideoPlayer({ hlsUrl, poster }: VideoPlayerProps) {
+  const videoRef = useRef<HTMLVideoElement>(null);
   const hlsRef = useRef<Hls | null>(null);
-  const [copied, setCopied] = useState(false);
-  const [videoElement, setVideoElement] = useState<HTMLVideoElement | null>(null);
-  const { toast } = useToast();
-  const { data: event, isLoading } = useVideoEvent(videoData.hlsUrl, videoIndex);
 
-  // Callback ref to get video element
-  const setRefs = useCallback((node: HTMLVideoElement | null) => {
-    console.log('Video ref callback:', node ? 'VIDEO ELEMENT' : 'NULL');
-    videoRef.current = node;
-    setVideoElement(node);
-  }, []);
-
-  // Initialize HLS when video element is ready
   useEffect(() => {
-    const video = videoElement;
-    if (!video) {
-      console.log('No video element yet');
-      return;
-    }
-
-    const hlsUrl = videoData.hlsUrl;
-    console.log('Initializing HLS');
-    console.log('videoData:', videoData);
-    console.log('hlsUrl:', hlsUrl);
-    console.log('hlsUrl type:', typeof hlsUrl);
-
-    if (!hlsUrl) {
-      console.error('NO HLS URL PROVIDED!');
-      return;
-    }
+    const video = videoRef.current;
+    if (!video || !hlsUrl) return;
 
     // Cleanup previous HLS instance
     if (hlsRef.current) {
-      console.log('Destroying previous HLS instance');
       hlsRef.current.destroy();
       hlsRef.current = null;
     }
 
     if (Hls.isSupported()) {
-      console.log('HLS.js is supported');
       const hls = new Hls({
         enableWorker: true,
         lowLatencyMode: false,
@@ -69,44 +41,60 @@ export function VideoLightbox({ video: videoData, videoIndex, onClose }: VideoLi
         capLevelToPlayerSize: true,
       });
 
-      console.log('About to call hls.loadSource with:', hlsUrl);
       hls.loadSource(hlsUrl);
-      hls.attachMedia(videoElement);
+      hls.attachMedia(video);
 
       hls.on(Hls.Events.MANIFEST_PARSED, () => {
-        console.log('HLS manifest parsed successfully');
-        videoElement.play().catch((e) => {
-          console.log('Autoplay blocked (click play button):', e);
+        video.play().catch(() => {
+          // Autoplay blocked, user will click play
         });
       });
 
-      hls.on(Hls.Events.ERROR, (event, data) => {
-        console.error('HLS Error:', data);
+      hls.on(Hls.Events.ERROR, (_event, data) => {
         if (data.fatal) {
-          console.error('Fatal HLS error');
+          console.error('Fatal HLS error:', data);
         }
       });
 
       hlsRef.current = hls;
 
       return () => {
-        console.log('Cleaning up HLS');
         hls.destroy();
         hlsRef.current = null;
       };
-    } else if (videoElement.canPlayType('application/vnd.apple.mpegurl')) {
-      console.log('Using native HLS (Safari)');
-      videoElement.src = hlsUrl;
-      videoElement.addEventListener('loadedmetadata', () => {
-        console.log('Metadata loaded');
-        videoElement.play().catch((e) => {
-          console.log('Autoplay blocked:', e);
+    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+      // Native HLS support (Safari)
+      video.src = hlsUrl;
+      video.addEventListener('loadedmetadata', () => {
+        video.play().catch(() => {
+          // Autoplay blocked
         });
       });
-    } else {
-      console.error('HLS not supported');
     }
-  }, [videoElement, videoData.hlsUrl]);
+  }, [hlsUrl]);
+
+  return (
+    <video
+      ref={videoRef}
+      controls
+      playsInline
+      poster={poster}
+      className="w-full h-full object-contain pointer-events-auto"
+      onClick={(e) => e.stopPropagation()}
+    />
+  );
+});
+
+interface VideoLightboxProps {
+  video: VideoData;
+  videoIndex: number;
+  onClose: () => void;
+}
+
+export function VideoLightbox({ video: videoData, videoIndex, onClose }: VideoLightboxProps) {
+  const [copied, setCopied] = useState(false);
+  const { toast } = useToast();
+  const { data: event, isLoading } = useVideoEvent(videoData.hlsUrl, videoIndex);
 
   const handleShare = async () => {
     const shareUrl = `${window.location.origin}?video=${videoIndex + 1}`;
@@ -133,7 +121,13 @@ export function VideoLightbox({ video: videoData, videoIndex, onClose }: VideoLi
 
   return (
     <Dialog open={true} onOpenChange={onClose}>
-      <DialogContent className="max-w-6xl w-full p-0 bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800" hideClose>
+      <DialogContent
+        className="max-w-6xl w-full p-0 bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800"
+        hideClose
+        onOpenAutoFocus={(e) => e.preventDefault()}
+        onCloseAutoFocus={(e) => e.preventDefault()}
+        onInteractOutside={(e) => e.preventDefault()}
+      >
         <VisuallyHidden>
           <DialogTitle>Video #{videoIndex + 1}</DialogTitle>
           <DialogDescription>Video player</DialogDescription>
@@ -151,12 +145,9 @@ export function VideoLightbox({ video: videoData, videoIndex, onClose }: VideoLi
               <X className="w-6 h-6" />
             </Button>
 
-            <video
-              ref={setRefs}
-              controls
-              playsInline
+            <VideoPlayer
+              hlsUrl={videoData.hlsUrl}
               poster={videoData.thumbnailBlossomUrl}
-              className="w-full h-full object-contain"
             />
           </div>
 
